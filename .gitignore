@@ -182,3 +182,5 @@ target
 **/*.rs.bk
 node_modules
 .yarn
+
+solana.key
