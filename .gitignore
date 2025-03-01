@@ -170,9 +170,15 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Replace with this single entry to ignore everything in test-ledger
-/test-ledger/ 
+# Solana test ledger
+test-ledger/
 
-# ignore all files in test-ledger and subdirectories
-test-ledger/* 
-test-ledger/**
+# Add this line to explicitly include your contract folder
+!contract/
+
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+.yarn
