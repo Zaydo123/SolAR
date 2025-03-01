@@ -169,3 +169,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Replace with this single entry to ignore everything in test-ledger
+/test-ledger/ 
+
+# ignore all files in test-ledger and subdirectories
+test-ledger/* 
+test-ledger/**
