@@ -5,13 +5,16 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-git_solana = "4j5b45kn4bbQGt4fbFfwuMqLFDetSnAyEbmVgx5RBdJk"
+git_solana = "5TQo5Bf6yXp9uywEFbp9YKUyveD2pe2LVXRjY2aWRup5"
+
+[programs.devnet]
+git_solana = "5TQo5Bf6yXp9uywEFbp9YKUyveD2pe2LVXRjY2aWRup5"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

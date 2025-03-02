@@ -13,6 +13,7 @@ This server provides Git hosting services that store repository metadata on the 
    - `README.md` - General information
    - `INTEGRATION.md` - Details on integrating with existing code
    - `SOLANA-INTEGRATION.md` - Solana-specific integration guide
+   - `CLIENT-SIGNING.md` - Guide for client-side transaction signing
 
 ## Prerequisites
 
@@ -84,7 +85,16 @@ git push
 
 - `npm run start` - Start the original server
 - `npm run start:working` - Start the working server with Solana integration
+- `npm run start:integrated` - Start the integrated server with Solana and Arweave integration
 - `npm run setup` - Set up the Solana program and create a test repository
+
+## Client-Side Transaction Signing
+
+For enhanced security, this server supports client-side Solana transaction signing. This ensures that only the repository owner can make changes to their repository on the Solana blockchain.
+
+The client-side signing tool is located in the project root at `/Users/zaydalzein/Desktop/SolAR/solar-git-signer`.
+
+See `CLIENT-SIGNING.md` in the project root for detailed instructions on setting up and using client-side signing.
 
 ## API Endpoints
 

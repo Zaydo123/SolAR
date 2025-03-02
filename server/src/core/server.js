@@ -2,9 +2,9 @@
  * Git server implementation using SolanaGitRepository
  * 
  * - Accepts Git operations over HTTP
- * - Uses Solana PDAs to identify repositories
- * - Simulates on-chain state with JSON files
- * - Simulates Arweave storage for packfiles
+ * - Uses real Solana blockchain for repository metadata
+ * - Stores Git data on Arweave permanent storage
+ * - Falls back to local storage if blockchain is unavailable
  */
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -13,11 +13,11 @@ const path = require("path");
 const SolanaGitRepository = require("./SolanaGitRepository");
 
 // Create the required directories if they don't exist
-const repoStatesDir = path.join(__dirname, "../../repo_states");
-const arweaveDir = path.join(__dirname, "../../arweave_storage");
+const reposDir = path.join(__dirname, "../../repos");
+const bundlesDir = path.join(__dirname, "../../bundles");
 
-if (!fs.existsSync(repoStatesDir)) fs.mkdirSync(repoStatesDir);
-if (!fs.existsSync(arweaveDir)) fs.mkdirSync(arweaveDir);
+if (!fs.existsSync(reposDir)) fs.mkdirSync(reposDir, { recursive: true });
+if (!fs.existsSync(bundlesDir)) fs.mkdirSync(bundlesDir, { recursive: true });
 
 // Create Express app
 const app = express();
@@ -37,12 +37,9 @@ app.use((req, res, next) => {
   next();
 });
 
-// Create directory for repositories if it doesn't exist
-const reposDir = path.join(__dirname, "../../repos");
-if (!fs.existsSync(reposDir)) {
-  fs.mkdirSync(reposDir, { recursive: true });
-  console.log(`Created repositories directory: ${reposDir}`);
-}
+// Log server directories
+console.log(`Using repositories directory: ${reposDir}`);
+console.log(`Using bundles directory: ${bundlesDir}`);
 
 // Instantiate your repository class (which extends GitRepository)
 const solanaRepo = new SolanaGitRepository();

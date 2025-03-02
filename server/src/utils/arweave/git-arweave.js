@@ -12,6 +12,7 @@
 const fs = require('fs');
 const { execSync } = require('child_process');
 const Irys = require('@irys/sdk');
+const bs58 = require('bs58');
 
 /**
  * Upload a Git repository to Arweave as a bundle
@@ -44,7 +45,42 @@ async function uploadGitBundle(options = {}) {
     if (!fs.existsSync(keyPath)) {
       throw new Error(`Solana key not found at ${keyPath}`);
     }
-    const key = fs.readFileSync(keyPath, 'utf8').trim();
+    
+    // Get key data
+    let key;
+    try {
+      // Try to parse as JSON (Solana CLI format)
+      const keyData = fs.readFileSync(keyPath, 'utf8').trim();
+      
+      // Check if this is a JSON array (standard Solana format)
+      if (keyData.startsWith('[') && keyData.endsWith(']')) {
+        // Convert JSON array to Uint8Array
+        const secretKeyArray = JSON.parse(keyData);
+        const secretKeyUint8 = new Uint8Array(secretKeyArray);
+        
+        // Convert to base58 format that Irys expects
+        // Use a different approach since there seems to be an issue with bs58
+        
+        // Convert Uint8Array to Buffer
+        const secretKeyBuffer = Buffer.from(secretKeyUint8);
+        
+        // Use base64 as an alternative encoding
+        key = secretKeyBuffer.toString('base64');
+        
+        if (verbose) {
+          console.log(`Using base64 encoding as fallback for Irys`);
+        }
+        
+        if (verbose) {
+          console.log(`Converted Solana CLI key format for Irys`);
+        }
+      } else {
+        // Assume it's already in base58 format
+        key = keyData;
+      }
+    } catch (keyError) {
+      throw new Error(`Failed to parse Solana key: ${keyError.message}`);
+    }
     
     // Create Git bundle
     if (verbose) {

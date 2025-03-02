@@ -1,32 +1,37 @@
 {
-  "name": "server",
+  "name": "solar-git-server",
   "version": "1.0.0",
-  "description": "Git server with Solana and Arweave integration",
-  "main": "src/core/server.js",
+  "description": "Git server with Solana blockchain and Arweave storage integration",
+  "main": "src/core/integrated-server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/core/server.js",
-    "start:working": "node src/core/working-server.js",
+    "start": "node src/core/integrated-server.js",
+    "start:nosol": "SOLANA_ENABLED=false ARWEAVE_ENABLED=false node src/core/integrated-server.js",
+    "dev": "nodemon src/core/integrated-server.js",
     "setup": "node src/utils/setup-solana.js",
-    "test:simple": "node src/tests/test-simplified-server.js",
-    "test:server": "node src/tests/test-server.js",
-    "test:clone": "node src/tests/test-clone.js",
-    "arweave:upload": "node src/utils/arweave/irys/irys-cli.js upload",
-    "arweave:download": "node src/utils/arweave/irys/irys-cli.js download",
-    "arweave:balance": "node src/utils/arweave/irys/irys-cli.js balance",
-    "arweave:fund": "node src/utils/arweave/irys/irys-cli.js fund"
+    "arweave": "node src/utils/arweave/irys/irys-cli.js"
   },
-  "keywords": [],
+  "keywords": [
+    "git",
+    "solana",
+    "arweave",
+    "blockchain",
+    "decentralized"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
     "@irys/sdk": "^0.2.11",
+    "@irys/upload": "^0.0.15",
+    "@irys/upload-solana": "^0.1.8",
     "@solana/web3.js": "^1.98.0",
     "body-parser": "^1.20.3",
-    "csv-parse": "^5.6.0",
-    "csv-stringify": "^6.5.2",
+    "bs58": "^6.0.0",
     "express": "^4.21.2",
     "simple-git": "^3.27.0"
+  },
+  "optionalDependencies": {
+    "csv-parse": "^5.6.0",
+    "csv-stringify": "^6.5.2"
   }
 }

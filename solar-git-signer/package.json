@@ -1,0 +1,35 @@
+{
+  "name": "@solar/git-signer",
+  "version": "0.1.0",
+  "description": "Client-side Solana transaction signing for SolAR Git repositories",
+  "main": "src/index.js",
+  "bin": {
+    "solar-signer": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "solana",
+    "git",
+    "blockchain",
+    "signing"
+  ],
+  "author": "SolAR Team",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/wallet-adapter-base": "^0.9.22",
+    "@solana/wallet-adapter-react": "^0.15.32",
+    "@solana/web3.js": "^1.78.0",
+    "bs58": "^5.0.0",
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.9",
+    "open": "^8.4.2",
+    "prompt-sync": "^4.2.0",
+    "qrcode-terminal": "^0.12.0",
+    "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.0",
+    "ws": "^8.13.0",
+    "yargs": "^17.7.2"
+  }
+}

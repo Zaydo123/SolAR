@@ -25,3 +25,7 @@ Thumbs.db
 # Project specific
 src/archive/
 dist/
+
+# Keys and secrets
+**/solana.key
+**/arweave-key*.json

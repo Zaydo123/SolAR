@@ -6,10 +6,15 @@ const {
   downloadGitBundle 
 } = require("./irysGit");
 
-// Parse command line arguments
-const action = process.argv[2];
-const param1 = process.argv[3];
-const param2 = process.argv[4];
+// Parse command line arguments, handling both direct invocation and npm run
+// When run with 'npm run arweave <command>', process.argv will be:
+// [node, path/to/file.js, <command>, <param1>, <param2>]
+// When run directly with 'node irys-cli.js <command>', it will be:
+// [node, irys-cli.js, <command>, <param1>, <param2>]
+const args = process.argv.slice(2);
+const action = args[0];
+const param1 = args[1];
+const param2 = args[2];
 
 // Main execution
 (async () => {

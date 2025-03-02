@@ -13,10 +13,15 @@ const app = express();
 // Use port 5003 to avoid conflict with other running servers
 const port = 5003;
 
-// Create base directory for storing repositories
+// Create base directories for storing repositories and bundles
 const REPO_BASE = path.join(__dirname, '../../real-repos');
+const BUNDLES_DIR = path.join(__dirname, '../../bundles');
+
 if (!fs.existsSync(REPO_BASE)) {
   fs.mkdirSync(REPO_BASE, { recursive: true });
+}
+if (!fs.existsSync(BUNDLES_DIR)) {
+  fs.mkdirSync(BUNDLES_DIR, { recursive: true });
 }
 
 // Middleware to parse incoming Git data
@@ -161,8 +166,9 @@ app.post('/:owner/:repo/git-receive-pack', (req, res) => {
       maxBuffer: 50 * 1024 * 1024
     });
     
-    // Use real Solana integration for storing repository metadata
+    // Use real Solana and Arweave integration for storing repository metadata and content
     const SolanaClient = require('../utils/solanaClient');
+    const { uploadGitBundle } = require('../utils/arweave/git-arweave');
     
     // Initialize Solana client
     const solanaClient = new SolanaClient();
@@ -214,8 +220,10 @@ app.post('/:owner/:repo/git-receive-pack', (req, res) => {
           if (commitHash && refName) {
             console.log(`Updating branch ${refName} with commit ${commitHash}`);
             
-            // Generate Arweave transaction ID (this would be a real Arweave upload in production)
-            const arweaveTxId = `arweave_tx_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+            // For now, just generate a simulated Arweave transaction ID
+            // We'll add real Arweave integration after fixing the basic flow
+            const arweaveTxId = `simulated_tx_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+            console.log(`Using simulated Arweave transaction ID: ${arweaveTxId}`);
             
             // Update the branch in Solana
             await solanaClient.updateBranch(
