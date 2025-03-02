@@ -185,3 +185,11 @@ node_modules
 
 real-repos
 solana.key
+
+bundles
+bundles/**
+repo_states
+repos
+test-git
+test-git/test-repo
+test-git/test4

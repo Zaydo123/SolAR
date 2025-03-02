@@ -15,6 +15,7 @@ const { PublicKey } = require('@solana/web3.js');
 // Import Solana and Arweave integrations
 const SolanaClient = require('../utils/solanaClient');
 const { uploadToArweave } = require('../utils/arweave/simple-uploader');
+const { downloadFromArweave, extractBundle } = require('../utils/arweave/simple-downloader');
 
 const app = express();
 // Use port 5003 to avoid conflict with other running servers
@@ -105,7 +106,7 @@ function ensureRepo(owner, repo) {
 }
 
 // Handle Git info/refs endpoint
-app.get('/:owner/:repo/info/refs', (req, res) => {
+app.get('/:owner/:repo/info/refs', async (req, res) => {
   try {
     const { owner, repo } = req.params;
     const service = req.query.service;
@@ -120,26 +121,120 @@ app.get('/:owner/:repo/info/refs', (req, res) => {
     
     console.log(`Processing ${service} request for ${owner}/${repo}`);
     
-    // If Solana is enabled, check if the repository exists
-    if (solanaEnabled && solanaClient) {
-      (async () => {
-        try {
-          const repoData = await solanaClient.getRepository(owner, repo);
-          if (repoData) {
-            console.log(`Found repository in Solana: ${repoData.name}`);
-          } else {
-            console.log(`Repository not found in Solana, will create if pushed to`);
-          }
-        } catch (error) {
-          console.log(`Repository not found in Solana: ${error.message}`);
-        }
-      })().catch(err => {
-        console.error(`Error checking Solana repository: ${err.message}`);
-      });
+    let repoExists = false;
+    let repoPath = path.join(REPO_BASE, owner, repo);
+    let usedArweave = false;
+    
+    // Check if repository exists locally
+    try {
+      if (fs.existsSync(repoPath) && fs.statSync(repoPath).isDirectory()) {
+        repoExists = true;
+        console.log(`Repository ${owner}/${repo} exists locally at ${repoPath}`);
+      } else {
+        console.log(`Repository ${owner}/${repo} does not exist locally`);
+      }
+    } catch (err) {
+      console.warn(`Error checking if repository exists locally: ${err.message}`);
     }
     
-    // Ensure repository exists locally
-    const repoPath = ensureRepo(owner, repo);
+    // If Solana is enabled and this is a clone/fetch (upload-pack), check if we need to restore from Arweave
+    if (service === 'git-upload-pack' && !repoExists && solanaEnabled && solanaClient) {
+      try {
+        console.log(`Attempting to check Solana for repository data...`);
+        
+        // For repository lookup, use server wallet as owner
+        const serverWallet = solanaClient.getWalletInfo().publicKey;
+        const repoData = await solanaClient.getRepository(serverWallet, repo);
+        
+        if (repoData && repoData.branches && repoData.branches.length > 0) {
+          console.log(`Found repository in Solana with ${repoData.branches.length} branches`);
+          
+          // Find the default branch (usually master or main)
+          const defaultBranch = repoData.branches.find(branch => 
+            branch.name === 'refs/heads/master' || 
+            branch.name === 'refs/heads/main') || 
+            repoData.branches[0];
+          
+          const arweaveTx = defaultBranch.arweaveTx;
+          
+          if (arweaveTx && !arweaveTx.startsWith('mock_') && !arweaveTx.startsWith('local_')) {
+            console.log(`Found valid Arweave transaction ID: ${arweaveTx}`);
+            
+            // Create temporary directories for bundle and extraction
+            const tempBundlePath = path.join(os.tmpdir(), `arweave-${Date.now()}.bundle`);
+            const tempExtractionDir = path.join(os.tmpdir(), `extract-${Date.now()}`);
+            
+            try {
+              // Download bundle from Arweave
+              console.log(`Downloading bundle from Arweave with transaction ID: ${arweaveTx}`);
+              await downloadFromArweave({
+                transactionId: arweaveTx,
+                outputPath: tempBundlePath,
+                verbose: true
+              });
+              
+              // Extract bundle to temporary directory
+              console.log(`Extracting bundle to temporary location: ${tempExtractionDir}`);
+              await extractBundle({
+                bundlePath: tempBundlePath,
+                extractDir: tempExtractionDir,
+                verbose: true
+              });
+              
+              // Create the repository directory structure
+              fs.mkdirSync(path.dirname(repoPath), { recursive: true });
+              
+              // Initialize a bare repository
+              execSync(`git init --bare "${repoPath}"`);
+              console.log(`Initialized bare repository: ${repoPath}`);
+              
+              // Push the extracted repo to the bare repo
+              execSync(`cd "${tempExtractionDir}" && git push --mirror "${repoPath}"`, { stdio: 'inherit' });
+              console.log(`Pushed extracted repository to: ${repoPath}`);
+              
+              // Set the flag to indicate Arweave was used
+              usedArweave = true;
+              repoExists = true;
+              
+              // Clean up temporary directories
+              try {
+                fs.unlinkSync(tempBundlePath);
+                fs.rmSync(tempExtractionDir, { recursive: true, force: true });
+                console.log(`Cleaned up temporary files and directories`);
+              } catch (cleanupError) {
+                console.warn(`Error cleaning up: ${cleanupError.message}`);
+              }
+            } catch (arweaveError) {
+              console.error(`Error restoring from Arweave: ${arweaveError.message}`);
+            }
+          } else {
+            console.log(`No valid Arweave transaction ID found: ${arweaveTx}`);
+          }
+        } else {
+          console.log(`Repository not found in Solana or has no branches`);
+        }
+      } catch (error) {
+        console.log(`Error checking Solana repository: ${error.message}`);
+      }
+    } else if (solanaEnabled && solanaClient && service === 'git-receive-pack') {
+      // For push operations, just check if repository exists in Solana
+      try {
+        const serverWallet = solanaClient.getWalletInfo().publicKey;
+        const repoData = await solanaClient.getRepository(serverWallet, repo);
+        if (repoData) {
+          console.log(`Found existing repository in Solana: ${repoData.name}`);
+        } else {
+          console.log(`Repository not found in Solana, will create if pushed to`);
+        }
+      } catch (error) {
+        console.log(`Repository not found in Solana: ${error.message}`);
+      }
+    }
+    
+    // Ensure repository exists locally (if not restored from Arweave)
+    if (!repoExists) {
+      repoPath = ensureRepo(owner, repo);
+    }
     
     // Set appropriate content type
     res.setHeader('Content-Type', `application/x-${service}-advertisement`);
@@ -160,6 +255,11 @@ app.get('/:owner/:repo/info/refs', (req, res) => {
       output
     ]);
     
+    // Log if Arweave was used
+    if (usedArweave) {
+      console.log(`Successfully served refs for ${owner}/${repo} from Arweave-restored repository`);
+    }
+    
     // Send the response
     res.send(response);
   } catch (error) {
@@ -169,12 +269,112 @@ app.get('/:owner/:repo/info/refs', (req, res) => {
 });
 
 // Handle Git upload-pack (fetching/cloning)
-app.post('/:owner/:repo/git-upload-pack', (req, res) => {
+app.post('/:owner/:repo/git-upload-pack', async (req, res) => {
   try {
     const { owner, repo } = req.params;
-    const repoPath = ensureRepo(owner, repo);
+    let repoPath = '';
+    let repoExists = false;
+    let usedArweave = false;
     
     console.log(`Processing git-upload-pack for ${owner}/${repo}`);
+    
+    // Check if repository exists locally
+    try {
+      repoPath = path.join(REPO_BASE, owner, repo);
+      if (fs.existsSync(repoPath)) {
+        repoExists = true;
+        console.log(`Repository ${owner}/${repo} exists locally at ${repoPath}`);
+      } else {
+        console.log(`Repository ${owner}/${repo} does not exist locally`);
+      }
+    } catch (checkError) {
+      console.error(`Error checking local repository: ${checkError.message}`);
+    }
+    
+    // If repository doesn't exist locally, try to restore it from Arweave
+    if (!repoExists && solanaEnabled && solanaClient) {
+      try {
+        console.log(`Attempting to restore repository from Arweave...`);
+        
+        // Get repository data from Solana
+        const serverWallet = solanaClient.getWalletInfo().publicKey;
+        const repoData = await solanaClient.getRepository(serverWallet, repo);
+        
+        if (repoData && repoData.branches && repoData.branches.length > 0) {
+          // Find the default branch (usually master or main)
+          const defaultBranch = repoData.branches.find(branch => 
+            branch.name === 'refs/heads/master' || 
+            branch.name === 'refs/heads/main') || 
+            repoData.branches[0];
+          
+          const arweaveTx = defaultBranch.arweaveTx;
+          
+          if (arweaveTx && !arweaveTx.startsWith('mock_') && !arweaveTx.startsWith('local_')) {
+            console.log(`Found Arweave transaction ID: ${arweaveTx}`);
+            
+            // Create temporary directories for bundle and extraction
+            const tempBundlePath = path.join(os.tmpdir(), `arweave-${Date.now()}.bundle`);
+            const tempExtractionDir = path.join(os.tmpdir(), `extract-${Date.now()}`);
+            
+            // Download bundle from Arweave
+            try {
+              console.log(`Downloading bundle from Arweave with transaction ID: ${arweaveTx}`);
+              await downloadFromArweave({
+                transactionId: arweaveTx,
+                outputPath: tempBundlePath,
+                verbose: true
+              });
+              
+              // Clone to temporary location
+              console.log(`Extracting bundle to temporary location: ${tempExtractionDir}`);
+              await extractBundle({
+                bundlePath: tempBundlePath,
+                extractDir: tempExtractionDir,
+                verbose: true
+              });
+              
+              // Create the repository directory structure
+              fs.mkdirSync(path.dirname(repoPath), { recursive: true });
+              
+              // Initialize a bare repository
+              execSync(`git init --bare "${repoPath}"`);
+              console.log(`Initialized bare repository: ${repoPath}`);
+              
+              // Push the extracted repo to the bare repo
+              execSync(`cd "${tempExtractionDir}" && git push --mirror "${repoPath}"`, { stdio: 'inherit' });
+              console.log(`Pushed extracted repository to: ${repoPath}`);
+              
+              // Set the flag to indicate Arweave was used
+              usedArweave = true;
+              repoExists = true;
+              
+              // Clean up temporary directories
+              try {
+                fs.unlinkSync(tempBundlePath);
+                fs.rmSync(tempExtractionDir, { recursive: true, force: true });
+                console.log(`Cleaned up temporary files and directories`);
+              } catch (cleanupError) {
+                console.warn(`Error cleaning up: ${cleanupError.message}`);
+              }
+            } catch (arweaveError) {
+              console.error(`Error restoring from Arweave: ${arweaveError.message}`);
+            }
+          } else {
+            console.log(`No valid Arweave transaction ID found for repository`);
+          }
+        } else {
+          console.log(`No branches found in repository data`);
+        }
+      } catch (restoreError) {
+        console.error(`Error attempting to restore repository: ${restoreError.message}`);
+      }
+    }
+    
+    // If repository still doesn't exist after Arweave attempt, create an empty one
+    if (!repoExists) {
+      repoPath = ensureRepo(owner, repo);
+      console.log(`Created empty repository at ${repoPath}`);
+    }
     
     // Create a temporary file for the request
     const tempFile = path.join(os.tmpdir(), `git-${Date.now()}.in`);
@@ -190,6 +390,13 @@ app.post('/:owner/:repo/git-upload-pack', (req, res) => {
     
     // Clean up
     fs.unlinkSync(tempFile);
+    
+    // Log if Arweave was used
+    if (usedArweave) {
+      console.log(`Successfully served git-upload-pack for ${owner}/${repo} from Arweave-restored repository`);
+    } else {
+      console.log(`Successfully served git-upload-pack for ${owner}/${repo} from local repository`);
+    }
     
     // Send the response
     res.send(output);
