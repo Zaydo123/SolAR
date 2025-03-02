@@ -1,103 +1,120 @@
-# Git Server with Solana and Arweave Integration
+# SolAR Git Server
 
-This server provides Git hosting services that store repository metadata on the Solana blockchain and repository content on Arweave.
+A Git server that integrates with Solana blockchain for storing repository metadata and Arweave for content storage.
 
 ## Project Structure
 
-1. Git Server Components:
-   - `working-server.js` - A reliable Git server that uses native Git commands
-   - `solanaClient.js` - Solana integration client
-   - `setup-solana.js` - Setup script for Solana program
+The project has been organized as follows:
 
-2. Documentation:
-   - `README.md` - General information
-   - `INTEGRATION.md` - Details on integrating with existing code
-   - `SOLANA-INTEGRATION.md` - Solana-specific integration guide
-
-## Prerequisites
-
-1. Node.js and npm
-2. Solana CLI tools
-3. Anchor framework
-4. Running Solana validator (for local development)
-
-## Quick Start
-
-### 1. Set up the Solana Program
-
-First, make sure a Solana test validator is running:
-
-```bash
-# In a separate terminal
-solana-test-validator
+```
+server/
+├── package.json         # Project dependencies and scripts
+├── src/                 # Source code directory
+│   ├── core/            # Core functionality
+│   │   ├── GitRepository.js       # Base Git repository handling
+│   │   ├── SolanaGitRepository.js # Solana-specific Git repository handling
+│   │   ├── protocol.js            # Git protocol utilities
+│   │   ├── server.js              # Standard server implementation
+│   │   ├── working-server.js      # Working server implementation
+│   │   └── solanaArweaveSim.js    # Solana and Arweave simulator
+│   ├── utils/           # Utility functions and modules
+│   │   ├── setup-solana.js        # Solana setup utilities
+│   │   ├── solanaClient.js        # Solana client functionality
+│   │   └── arweave/               # Arweave integration utilities
+│   │       ├── arweaveGit.js      # Basic Arweave Git operations
+│   │       ├── git-arweave.js     # Git-Arweave integration for repository storage
+│   │       ├── index.js           # Main Arweave module entry point
+│   │       └── irys/              # Irys (Bundlr) integration for Arweave
+│   │           ├── irysGit.js     # Core Irys-Git integration
+│   │           ├── irys-cli.js    # CLI tool for Irys operations
+│   │           ├── irys-upload.js # Uploading repositories to Arweave via Irys
+│   │           └── irys-download.js # Downloading repositories from Arweave
+│   ├── tests/           # Test files
+│   │   ├── test-server.js         # Server testing
+│   │   ├── test-simplified-server.js # Simplified server testing 
+│   │   └── test-clone.js          # Git clone testing
+│   ├── docs/            # Documentation
+│   │   ├── README.md              # Detailed project documentation
+│   │   ├── INTEGRATION.md         # Integration documentation
+│   │   ├── SOLANA-INTEGRATION.md  # Solana integration details
+│   │   └── arweave/               # Arweave-specific documentation
+│   │       └── README.md          # Arweave integration documentation
+│   └── archive/         # Archived files (obsolete or temporary)
+├── real-repos/          # Storage for real Git repositories
+├── repo_states/         # Repository state storage
+└── repos/               # Local repository storage
 ```
 
-Then build and deploy the program:
+## Getting Started
 
-```bash
-# From the project root
-cd git-solana
-anchor build
-anchor deploy
+1. Install dependencies:
+```
+npm install
 ```
 
-Or use the setup script:
-
-```bash
-# From the server directory
+2. Set up Solana (optional):
+```
 npm run setup
 ```
 
-### 2. Start the Git Server
+3. Start the server:
+```
+npm start
+```
 
-```bash
-# From the server directory
+or use the working server implementation:
+```
 npm run start:working
 ```
 
-The server will start on port 5002 by default.
+## Using Arweave Integration
 
-### 3. Use Git as Usual
+The Arweave integration allows storing Git repositories on the permanent Arweave storage network.
 
-```bash
-# Clone a repository
-git clone http://localhost:5002/<owner_name>/<repo_name>
+### Basic Usage
+```javascript
+// Import Git-Arweave integration
+const { uploadGitBundle, downloadGitBundle } = require('./src/utils/arweave/git-arweave');
 
-# Create a file
-echo "Hello, Solana!" > README.md
+// Upload a repository to Arweave
+const txId = await uploadGitBundle({
+  keyPath: './solana.key',  // Solana key for payment
+  repoPath: './my-repo',    // Path to repository
+  network: 'devnet'         // Use 'mainnet' for production
+});
 
-# Commit and push
-git add .
-git commit -m "Initial commit"
-git push
+// Download a repository from Arweave
+await downloadGitBundle(txId, {
+  outputDir: './restored-repo'
+});
 ```
 
-## How It Works
+### Using the CLI Tool
+```bash
+# Check Irys balance
+node src/utils/arweave/irys/irys-cli.js balance
 
-1. **Git Operations**: The server handles Git protocol using native Git commands with `--stateless-rpc`.
+# Fund your Irys account
+node src/utils/arweave/irys/irys-cli.js fund 0.1 solana
 
-2. **Solana Integration**: Repository metadata (repository name, branches, commit hashes) is stored on the Solana blockchain.
+# Upload a Git repository
+node src/utils/arweave/irys/irys-cli.js upload
 
-3. **Arweave Storage**: Repository content is referenced by Arweave transaction IDs stored in Solana.
+# Download a repository using transaction ID
+node src/utils/arweave/irys/irys-cli.js download <TX_ID>
+```
 
-## Available Scripts
+## Testing
 
-- `npm run start` - Start the original server
-- `npm run start:working` - Start the working server with Solana integration
-- `npm run setup` - Set up the Solana program and create a test repository
+Run tests using:
+```
+npm run test:server  # Test the server implementation
+npm run test:simple  # Test the simplified server implementation
+npm run test:clone   # Test Git clone functionality
+```
 
-## API Endpoints
+## Documentation
 
-- `GET /:owner/:repo/info/refs` - Git info/refs endpoint
-- `POST /:owner/:repo/git-upload-pack` - Used for git fetch/clone
-- `POST /:owner/:repo/git-receive-pack` - Used for git push
+See the detailed documentation in the `src/docs/` directory.
 
-## Solana Account Structure
-
-Repositories are stored in Solana with the following structure:
-
-- **Repository**: Owner, name, collaborators, and branches
-- **Branch**: Name and commit reference
-- **CommitReference**: Commit hash and Arweave transaction ID
-
-See `SOLANA-INTEGRATION.md` for more detailed information on the Solana integration.
+For Arweave integration documentation, see `src/docs/arweave/README.md`.
