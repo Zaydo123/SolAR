@@ -1,5 +1,5 @@
 
-const transactionId = "WdzHKRz4v-3JeuhfH4vfrhLZrXfpf-ozvUvzJezq5cE"; // Replace with your transaction ID
+const transactionId = "WdzHKRz4v-3JeuhfH4vfrhLZrXfpf-ozvUvzJezq5cE"; 
 const url = `http://localhost:1984/tx/${transactionId}/data`;
 
 (async () => {

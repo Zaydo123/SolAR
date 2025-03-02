@@ -1,0 +1,12 @@
+{
+  "name": "crypto-git-arweave",
+  "version": "1.0.0",
+  "description": "A decentralized Git system using Arweave for storage",
+  "main": "upload.js",
+  "scripts": {
+    "start": "node upload.js"
+  },
+  "dependencies": {
+    "arweave": "^1.15.5"
+  }
+}

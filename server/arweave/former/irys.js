@@ -1,4 +1,4 @@
-require("dotenv").config(); // Load environment variables
+require("dotenv").config(); 
 const { Irys } = require("@irys/upload");
 
 const getIrys = async () => {

@@ -12,7 +12,7 @@ const arweave = Arweave.init({
 
 const uploadTestData = async () => {
   try {
-    const sampleData = "Suvan is cute as fuck";
+    const sampleData = "Suvan is cute";
 
     const transaction = await arweave.createTransaction({ data: sampleData }, walletKey);
 
