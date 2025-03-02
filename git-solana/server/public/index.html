@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SolAR Explorer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f9;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        h1 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .repo-card {
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            transition: all 0.2s ease;
+        }
+        .repo-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .repo-card h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+        .repo-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .repo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .star-count, .branch-count {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .pagination-btn {
+            padding: 8px 16px;
+            background-color: #f0f2f5;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #repository-details {
+            display: none;
+            margin-top: 20px;
+        }
+        .repository-header {
+            margin-bottom: 20px;
+        }
+        .repository-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .repository-address-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .repository-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+        }
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+        .branch-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .branch {
+            padding: 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .main-branch {
+            background-color: #f0fff4;
+            border-color: #68d391;
+        }
+        .download-section {
+            margin-top: 16px;
+        }
+        .download-options {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        button {
+            padding: 8px 16px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button:disabled {
+            background-color: #93c5fd;
+            cursor: not-allowed;
+        }
+        .back-button {
+            background-color: #6b7280;
+            margin-bottom: 20px;
+        }
+        .search-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px 0 0 4px;
+            font-size: 16px;
+        }
+        .search-container button {
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>SolAR Explorer</h1>
+    
+    <div class="container">
+        <form id="search-form" class="search-container">
+            <input type="text" id="search-input" placeholder="Search by repository address or name...">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+    
+    <div id="repository-list" class="container">
+        <h2>Recent Repositories</h2>
+        <div id="repositories-container" class="repo-grid">
+            <div class="loading">Loading repositories...</div>
+        </div>
+        <div class="pagination">
+            <button id="prev-page" class="pagination-btn" disabled>Previous</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page" class="pagination-btn">Next</button>
+        </div>
+    </div>
+    
+    <div id="repository-details" class="container">
+        <button id="back-to-list" class="back-button">← Back to Repositories</button>
+        <div class="repository-header">
+            <h2 id="repo-name">Repository Name</h2>
+            <div class="repository-meta">
+                <span id="repo-created" class="repo-created">Created: </span>
+                <div class="repository-address-container">
+                    <span class="address-label">Address:</span>
+                    <code id="repo-address"></code>
+                </div>
+            </div>
+            
+            <div class="repository-stats">
+                <div id="star-button" class="stat-item star-item">
+                    <span id="star-icon" class="stat-icon">☆</span>
+                    <span id="star-count" class="stat-value">0 Stars</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🔱</span>
+                    <span id="branch-count" class="stat-value">0 Branches</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="repository-content">
+            <div class="section-container">
+                <h3 class="section-title">Branches</h3>
+                <div id="branches-container" class="branch-list">
+                    <!-- Branches will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3002/api';
+        const MOCK_API = `${API_BASE_URL}/mock`;
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentRepository = null;
+        
+        // Elements
+        const repositoriesContainer = document.getElementById('repositories-container');
+        const repositoryList = document.getElementById('repository-list');
+        const repositoryDetails = document.getElementById('repository-details');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageInfo = document.getElementById('page-info');
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const backToListBtn = document.getElementById('back-to-list');
+        const repoNameElement = document.getElementById('repo-name');
+        const repoAddressElement = document.getElementById('repo-address');
+        const repoCreatedElement = document.getElementById('repo-created');
+        const starIcon = document.getElementById('star-icon');
+        const starCount = document.getElementById('star-count');
+        const branchCount = document.getElementById('branch-count');
+        const branchesContainer = document.getElementById('branches-container');
+        const starButton = document.getElementById('star-button');
+        
+        // Fetch repositories
+        async function fetchRepositories() {
+            try {
+                repositoriesContainer.innerHTML = '<div class="loading">Loading repositories...</div>';
+                
+                const response = await fetch(`${MOCK_API}/repositories?page=${currentPage}&limit=10`);
+                const data = await response.json();
+                
+                if (data.repositories && data.repositories.length > 0) {
+                    totalPages = data.pagination.pages;
+                    
+                    // Update pagination
+                    pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = currentPage === totalPages;
+                    
+                    // Render repositories
+                    renderRepositories(data.repositories);
+                } else {
+                    repositoriesContainer.innerHTML = '<p>No repositories found.</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching repositories:', error);
+                repositoriesContainer.innerHTML = '<p>Error loading repositories. Please try again.</p>';
+            }
+        }
+        
+        // Render repositories
+        function renderRepositories(repositories) {
+            repositoriesContainer.innerHTML = '';
+            
+            repositories.forEach(repo => {
+                const repoCard = document.createElement('div');
+                repoCard.className = 'repo-card';
+                repoCard.innerHTML = `
+                    <h3>${repo.name}</h3>
+                    <div class="repo-stats">
+                        <span class="star-count">⭐ ${repo.stars}</span>
+                        <span class="branch-count">🔱 ${repo.branches.length}</span>
+                    </div>
+                `;
+                
+                repoCard.addEventListener('click', () => {
+                    showRepositoryDetails(repo.owner, repo.name);
+                });
+                
+                repositoriesContainer.appendChild(repoCard);
+            });
+        }
+        
+        // Show repository details
+        async function showRepositoryDetails(owner, name) {
+            try {
+                repositoryList.style.display = 'none';
+                repositoryDetails.style.display = 'block';
+                
+                // Fetch repository details
+                const response = await fetch(`${MOCK_API}/repositories/${owner}/${name}`);
+                const repo = await response.json();
+                currentRepository = repo;
+                
+                // Update UI
+                repoNameElement.textContent = repo.name;
+                repoAddressElement.textContent = repo.address || repo.id;
+                repoCreatedElement.textContent = `Created: ${new Date(repo.created_at).toLocaleDateString()}`;
+                starCount.textContent = `${repo.stars} Stars`;
+                branchCount.textContent = `${repo.branches.length} Branches`;
+                
+                // Render branches
+                branchesContainer.innerHTML = '';
+                repo.branches.forEach(branch => {
+                    const branchElement = document.createElement('div');
+                    branchElement.className = `branch ${branch.name === 'main' ? 'main-branch' : ''}`;
+                    branchElement.innerHTML = `
+                        <span class="branch-name">${branch.name}</span>
+                        <span class="branch-commit">Commit: ${branch.commit_hash.substring(0, 8)}</span>
+                        <span class="branch-date">Updated: ${new Date(branch.date).toLocaleDateString()}</span>
+                    `;
+                    branchesContainer.appendChild(branchElement);
+                });
+                
+                // Check if starred
+                checkStarStatus();
+            } catch (error) {
+                console.error('Error fetching repository details:', error);
+            }
+        }
+        
+        // Check if repository is starred
+        async function checkStarStatus() {
+            try {
+                if (!currentRepository) return;
+                
+                const mockStarred = Math.random() > 0.3; // Random for demo
+                starIcon.textContent = mockStarred ? '★' : '☆';
+            } catch (error) {
+                console.error('Error checking star status:', error);
+            }
+        }
+        
+        // Toggle star
+        async function toggleStar() {
+            if (!currentRepository) return;
+            
+            const isCurrentlyStarred = starIcon.textContent === '★';
+            
+            try {
+                // Update UI optimistically
+                starIcon.textContent = isCurrentlyStarred ? '☆' : '★';
+                const newStarCount = isCurrentlyStarred 
+                    ? Math.max(0, parseInt(starCount.textContent) - 1)
+                    : parseInt(starCount.textContent) + 1;
+                    
+                starCount.textContent = `${newStarCount} Stars`;
+                
+                // Call API (mock)
+                const endpoint = isCurrentlyStarred ? 'unstar' : 'star';
+                const mockResponse = await fetch(`${MOCK_API}/repositories/${currentRepository.owner}/${currentRepository.name}/${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ userAddress: 'mock-user-address' })
+                });
+                
+                // If real API fails, revert UI
+                if (!mockResponse.ok) {
+                    starIcon.textContent = isCurrentlyStarred ? '★' : '☆';
+                    starCount.textContent = `${isCurrentlyStarred ? parseInt(starCount.textContent) + 1 : parseInt(starCount.textContent) - 1} Stars`;
+                }
+            } catch (error) {
+                console.error('Error toggling star:', error);
+            }
+        }
+        
+        // Event listeners
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchRepositories();
+            }
+        });
+        
+        nextPageBtn.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchRepositories();
+            }
+        });
+        
+        searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const searchTerm = searchInput.value.trim();
+            
+            if (searchTerm) {
+                // For demo, just show with mock
+                showRepositoryDetails('FZL8PK74v3kYDVF6YunpMZZrxsJamGJZQHtYxRDfqdJU', searchTerm);
+            }
+        });
+        
+        backToListBtn.addEventListener('click', () => {
+            repositoryDetails.style.display = 'none';
+            repositoryList.style.display = 'block';
+            currentRepository = null;
+        });
+        
+        starButton.addEventListener('click', toggleStar);
+        
+        // Initial fetch
+        fetchRepositories();
+    </script>
+</body>
+</html>

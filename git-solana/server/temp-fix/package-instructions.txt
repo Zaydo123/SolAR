@@ -1,0 +1,38 @@
+To fix the import dependency issues in your React app, follow these steps:
+
+1. Install CRACO:
+   ```
+   cd /Users/shauryaiyer/SolAR/SolAR/website/SolARexplorer_bundle
+   npm install @craco/craco --save-dev
+   ```
+
+2. Copy the craco.config.js file from this directory to your React app's root directory:
+   ```
+   cp /Users/shauryaiyer/SolAR/SolAR/git-solana/server/temp-fix/craco.config.js /Users/shauryaiyer/SolAR/SolAR/website/SolARexplorer_bundle/
+   ```
+
+3. Update your package.json scripts section to use CRACO instead of react-scripts:
+   ```json
+   "scripts": {
+     "start": "craco start",
+     "build": "craco build",
+     "test": "craco test",
+     "eject": "react-scripts eject"
+   }
+   ```
+
+4. Run your app with:
+   ```
+   npm start
+   ```
+
+This solution will disable the ModuleScopePlugin which is causing your dependency issues with imports that reach outside of the src directory.
+
+Alternative approach:
+If you prefer not to use CRACO, you can:
+
+1. Move all your external dependencies inside the src directory
+2. Or add a .env file with:
+   ```
+   NODE_PATH=./src/..
+   ```

@@ -6,6 +6,7 @@ skip-lint = false
 
 [programs.localnet]
 git_solana = "4j5b45kn4bbQGt4fbFfwuMqLFDetSnAyEbmVgx5RBdJk"
+git_star = "2e1PXZUvJYR8Qci7T9esFZNPgvBiDYiVnzMRzSLSroiJ"
 
 [registry]
 url = "https://api.apr.dev"

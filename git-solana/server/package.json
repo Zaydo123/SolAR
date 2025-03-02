@@ -1,0 +1,31 @@
+{
+  "name": "solar-explorer-api",
+  "version": "1.0.0",
+  "description": "API for SolAR Explorer website",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "install-ui": "mkdir -p public && echo 'Please run: cp -r /Users/shauryaiyer/SolAR/SolAR/website/SolARexplorer_bundle/build/* public/' > public/README.md",
+    "build-ui": "echo 'Please run: cd /Users/shauryaiyer/SolAR/SolAR/website/SolARexplorer_bundle && npm install && npm run build'",
+    "setup-manual": "npm install && mkdir -p public && echo 'Manual setup required. Follow instructions in README.md'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.28.0",
+    "@solana/web3.js": "^1.78.5",
+    "arweave": "^1.14.4",
+    "bs58": "^5.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
+    "tar-stream": "^3.1.6",
+    "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@craco/craco": "^7.1.0",
+    "nodemon": "^3.0.1"
+  }
+}
