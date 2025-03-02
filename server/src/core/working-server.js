@@ -14,7 +14,7 @@ const app = express();
 const port = 5003;
 
 // Create base directory for storing repositories
-const REPO_BASE = path.join(__dirname, 'real-repos');
+const REPO_BASE = path.join(__dirname, '../../real-repos');
 if (!fs.existsSync(REPO_BASE)) {
   fs.mkdirSync(REPO_BASE, { recursive: true });
 }
@@ -61,7 +61,7 @@ app.get('/:owner/:repo/info/refs', (req, res) => {
     
     // Initialize SolanaClient - we'll check if the repository exists in Solana
     // but won't block the Git operation if it doesn't - this allows for initial clones
-    const SolanaClient = require('./solanaClient');
+    const SolanaClient = require('../utils/solanaClient');
     const solanaClient = new SolanaClient();
     
     // Check Solana repository existence asynchronously
@@ -162,7 +162,7 @@ app.post('/:owner/:repo/git-receive-pack', (req, res) => {
     });
     
     // Use real Solana integration for storing repository metadata
-    const SolanaClient = require('./solanaClient');
+    const SolanaClient = require('../utils/solanaClient');
     
     // Initialize Solana client
     const solanaClient = new SolanaClient();

@@ -4,8 +4,8 @@ const path = require("path");
 const { PublicKey } = require("@solana/web3.js");
 const crypto = require("crypto");
 
-const REPO_STATES_DIR = path.join(__dirname, "repo_states");
-const ARWEAVE_DIR = path.join(__dirname, "arweave_storage");
+const REPO_STATES_DIR = path.join(__dirname, "../../repo_states");
+const ARWEAVE_DIR = path.join(__dirname, "../../arweave_storage");
 
 if (!fs.existsSync(REPO_STATES_DIR)) fs.mkdirSync(REPO_STATES_DIR);
 if (!fs.existsSync(ARWEAVE_DIR)) fs.mkdirSync(ARWEAVE_DIR);

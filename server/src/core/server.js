@@ -13,8 +13,8 @@ const path = require("path");
 const SolanaGitRepository = require("./SolanaGitRepository");
 
 // Create the required directories if they don't exist
-const repoStatesDir = path.join(__dirname, "repo_states");
-const arweaveDir = path.join(__dirname, "arweave_storage");
+const repoStatesDir = path.join(__dirname, "../../repo_states");
+const arweaveDir = path.join(__dirname, "../../arweave_storage");
 
 if (!fs.existsSync(repoStatesDir)) fs.mkdirSync(repoStatesDir);
 if (!fs.existsSync(arweaveDir)) fs.mkdirSync(arweaveDir);
@@ -38,7 +38,7 @@ app.use((req, res, next) => {
 });
 
 // Create directory for repositories if it doesn't exist
-const reposDir = path.join(__dirname, "repos");
+const reposDir = path.join(__dirname, "../../repos");
 if (!fs.existsSync(reposDir)) {
   fs.mkdirSync(reposDir, { recursive: true });
   console.log(`Created repositories directory: ${reposDir}`);
