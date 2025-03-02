@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@irys/sdk": "^0.2.11",
+    "csv-parse": "^5.6.0",
+    "csv-stringify": "^6.5.2"
+  }
+}
