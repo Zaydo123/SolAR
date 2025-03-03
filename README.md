@@ -1,4 +1,5 @@
 # SolAR: Decentralized Git Storage with Solana and Arweave
+[![wakatime](https://wakatime.com/badge/user/1e0c7b41-9358-4c24-b209-88941b80c542/project/535437bb-b9c9-4068-8100-9d454d53fd8f.svg)](https://wakatime.com/badge/user/1e0c7b41-9358-4c24-b209-88941b80c542/project/535437bb-b9c9-4068-8100-9d454d53fd8f)
 
 SolAR is a decentralized Git server that combines the familiar Git workflow with blockchain technology, providing developers with a resilient, transparent, and trustless code storage solution.
 
